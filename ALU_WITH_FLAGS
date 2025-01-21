@@ -1,0 +1,42 @@
+module alu(A,B,Control,Result,Overflow,Carry,Zero,Negative);
+ //declaring inputs
+ input [31:0]A,B,Result;
+ input [2:0]Control;
+ //declaring outputs
+ output [31:0]Result;
+ output overflow,Carry,Zero,Negative;
+//declaring interim wires
+wire [31:0] a_and_b;
+wire [31:0] a_or_b;
+wire [31:0] not_b;
+wire [31:0] mux_b;
+wire [31:0] sum;
+wire [31:0] final_mux;
+wire cout;
+wire[31:0] slt;
+//logic design
+
+assign a_and_b = A & B;
+assign a_or_b = A | B;
+assign not_b = ~b;
+
+//ternary operator for mux
+
+assign mux_b = Control[0] ? not_b : b;
+
+assign {cout,sum} = A + mux_b + Control[0];
+
+//designing a 4x1 mux
+
+assign final_mux = ((Control[2:0]==3'b000) || (Control[2:0]==3'b001)) ? sum : (Control[2:0]==3'b010) ? a_and_b : (Control[2:0]==3'b011) ? a_or_b : (Control[2:0]==3'b101) ? slt : 32'h0;
+
+assign Result = final_mux;
+assign Zero = &(~A); //zero flag
+assign Negative = Result[31]; //negative flag
+assign Carry = cout & (~Control[1]); //carry flag
+assign Overflow = (~Control[1]) & (A[31]^sum[31]) & (~(A[31] ^ B[31] ^ Control[0])); //overflow flag
+
+//zero extension
+assign slt= {30'b0,sum[31]};
+
+endmodule
